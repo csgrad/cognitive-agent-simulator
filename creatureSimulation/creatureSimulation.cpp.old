@@ -1,0 +1,311 @@
+// creatureSimulation.cpp : Defines the entry point for the console application.
+// Jason Ernst, University of Guelph
+// January 2012
+//
+#include "stdafx.h"
+#include "Simulation.h"
+
+#define NUM_ARGS	4				/* Number of command-line arguments */
+#define SIM_ERROR	-1				/* return values for success and failure */
+#define SIM_SUCCESS	0
+
+int readConfiguration(string fileName);
+int readPriorKnowledge(string fileName);
+
+Simulation * cfg;
+
+/*
+ * Main simulation program
+ */
+int main(int argc, char * argv[])
+{
+	//check for correct number of args
+	if(argc != NUM_ARGS+1)
+	{
+		cout << "Usage: creatureSimulation-yy-xx <simcfg> <knowledgein> <simtrace> <knowledgeout>" << endl;
+		return SIM_ERROR;
+	}
+
+	//attempt to read configuration file <infile1>
+	if(DEBUG)
+		cout << "Reading configuration input file: '" << argv[1] << "'...";
+	if(readConfiguration(argv[1]) != SIM_SUCCESS)
+	{
+		if(DEBUG)
+			cout << "Error reading configuration file" << endl;
+		return SIM_ERROR;
+	}
+	if(DEBUG)
+		cout << "Success" << endl;
+
+	if(DEBUG)
+		cfg->displayCfg();
+
+	//attempt to read prior knowledge file <infile2>
+	if(DEBUG)
+		cout << "Reading knowledge file: '" << argv[2] << "'...";
+	if(readPriorKnowledge(argv[2]) != SIM_SUCCESS)
+	{
+		if(DEBUG)
+			cout << "Error reading prior knowledge file" << endl;
+		//return SIM_ERROR;
+	}
+	else
+		if(DEBUG)
+			cout << "Success" << endl;
+
+	//attempt to open the output files
+	if(DEBUG)
+		cout << "Attempting to open trace output file: '" << argv[3] << "'...";
+	ofstream simOFile(argv[3], ofstream::out);
+	if(simOFile.is_open())
+	{
+		cfg->setSimulationTrace(&simOFile);
+		if(DEBUG)
+			cout << "OK." << endl;
+	}
+	else
+		if(DEBUG)
+			cout << "Error opening file for simulation trace output" << endl;
+
+	if(DEBUG)
+		cout << "Attempting to open knowledge output file: '" << argv[4] << "'...";
+	ofstream knowledgeOFile(argv[4], ofstream::out);
+	if(knowledgeOFile.is_open())
+	{
+		cfg->setKnowledgeOutput(&knowledgeOFile);
+		if(DEBUG)
+			cout << "OK." << endl;
+	}
+	else
+		if(DEBUG)
+			cout << "Error opening file for knowledge output" << endl;
+
+	cfg->run();
+
+	simOFile.close();
+	knowledgeOFile.close();
+
+	return 0;
+}
+
+// Reads the configuration file input1 which contains all of the simulation parameters
+// returns SIM_ERROR on error or SIM_SUCCESS on success
+int readConfiguration(string fileName)
+{
+	unsigned long int maxTime = 0;
+	unsigned long int cellNum = 0;
+	unsigned short int laneNum = 0;
+	unsigned int distances[3] = {0};
+	unsigned int velocities[3] = {0};
+	unsigned int maxSpeed = 0;
+	bool randomDecel = false;
+	int intelligence = 0;
+	int experiment_id = 0;
+	int fuzzyMembers = 3;
+	int kbOutput = 0;
+	float entryCarProb = 0.0;
+	float entryCreatureProb = 0.0;
+	float fixedFear = 0.0;
+	float fixedDesire = 0.0;
+	vector<unsigned int> crossPoints;
+
+	ifstream infile(fileName, ifstream::in);
+	string line, cmd, para1, para2, para3;
+
+	if(infile.is_open())
+	{
+		getline(infile, line);
+
+		//parse each line until end of file
+		while(!infile.eof())
+		{
+			istringstream istr(string(line), ios_base::out);
+			istr >> cmd >> para1;
+
+			//only set the variables if they haven't already been set (as per spec), except for crossPoints
+			if((cmd == "MAX_TIME") && (maxTime == 0))
+			{
+				maxTime = atoi(para1.c_str());
+				if((maxTime == 0) || (maxTime == INT_MAX) || (maxTime == INT_MIN))
+					cout << "Error converting maxTime, check the format" << endl;
+			}
+			else if((cmd == "CELL_NUM") && (cellNum == 0))
+			{
+				cellNum = atoi(para1.c_str());
+				if((cellNum == 0) || (cellNum == INT_MAX) || (cellNum == INT_MIN))
+					cout << "Error converting cellNum, check the format" << endl;
+			}
+			else if((cmd == "LANE_NUM") && (laneNum == 0))
+			{
+				laneNum = atoi(para1.c_str());
+				if((laneNum == 0) || (laneNum == INT_MAX) || (laneNum == INT_MIN))
+					cout << "Error converting laneNum, check the format" << endl;
+			}
+			else if((cmd == "MAX_SPEED") && (maxSpeed == 0))
+			{
+				maxSpeed = atoi(para1.c_str());
+				if((maxSpeed == 0) || (maxSpeed == INT_MAX) || (maxSpeed == INT_MIN))
+					cout << "Error converting maxSpeed, check the format" << endl;
+			}
+			else if((cmd == "ENTRY_CAR_PROB") && (entryCarProb == 0))
+			{
+				entryCarProb = (float)atof(para1.c_str());
+				if((entryCarProb == 0) || (entryCarProb == HUGE_VAL))
+					cout << "Error converting entryCarProb, check the format" << endl;
+			}
+			else if((cmd == "ENTRY_CREATURE_PROB") && (entryCreatureProb == 0))
+			{
+				entryCreatureProb = (float)atof(para1.c_str());
+				if((entryCreatureProb == 0) || (entryCreatureProb == HUGE_VAL))
+					cout << "Error converting entryCreatureProb, check the format" << endl;
+			}
+			else if(cmd == "CROSS_POINT")
+			{
+				unsigned int crossPoint = atoi(para1.c_str());
+				if((crossPoint == 0) || (crossPoint == INT_MAX) || (crossPoint == INT_MIN))
+					cout << "Error converting one of the crossPoints, check the format" << endl;
+				crossPoints.push_back(crossPoint);
+			}
+			else if(cmd == "DISTANCE")
+			{
+				istr >> para2 >> para3;
+				distances[0] = atoi(para1.c_str());
+				distances[1] = atoi(para2.c_str());
+				distances[2] = atoi(para3.c_str());
+				if((distances[0] >= distances[1]) || (distances[0] >= distances[2]) || (distances[1] >= distances[2]))
+					cout << "Error: DISTANCE should be specified from lowest to highest values" << endl;				
+			}
+			else if(cmd == "VELOCITY")
+			{
+				istr >> para2 >> para3;
+				velocities[0] = atoi(para1.c_str());
+				velocities[1] = atoi(para2.c_str());
+				velocities[2] = atoi(para3.c_str());
+				if((velocities[0] >= velocities[1]) || (velocities[0] >= velocities[2]) || (velocities[1] >= velocities[2]))
+					cout << "Error: VELOCITY should be specified from lowest to highest values" << endl;
+			}
+			else if(cmd == "INTELLIGENCE")
+			{
+				//see simulation.h for intelligence definitions
+				intelligence = atoi(para1.c_str());					
+			}
+			else if(cmd == "RANDOM_DECEL")
+			{
+				unsigned int c;
+				for(c = 0 ; c < strlen(para1.c_str()); c++)
+					toupper(para1[c]);
+				if(para1 == "TRUE")
+					randomDecel = true;
+				else
+					randomDecel = false;
+			}
+			else if(cmd == "ID")
+			{
+				experiment_id = atoi(para1.c_str());
+			}
+			else if(cmd == "FIXED_FEAR")
+			{
+				fixedFear = (float)atof(para1.c_str());
+			}
+			else if(cmd == "FIXED_DESIRE")
+			{
+				fixedDesire = (float)atof(para1.c_str());
+			}
+			else if(cmd == "FUZZY_MEMBERS")
+			{
+				fuzzyMembers = atoi(para1.c_str());
+			}
+			else if(cmd == "KB_OUTPUT")
+			{
+				kbOutput = atoi(para1.c_str());
+			}
+
+			else if((cmd == "") || (cmd[0] == '#') || (cmd[0] == '/'))
+			{
+				//do nothing (handle blank lines or comments)
+			}
+			else
+				cout << "Cannot read this command (or duplicate): " << cmd << endl;
+
+			getline(infile, line);
+		}
+
+		infile.close();
+	}
+	else
+	{
+		if(DEBUG)
+			cout << "Unable to open file: '" << fileName << "'" << endl;
+		return SIM_ERROR;
+	}
+
+	// check to make sure we have read all of the correct information from the input file
+	if( (maxTime == 0) || (cellNum == 0) || (laneNum == 0) || (maxSpeed == 0) || (crossPoints.size() == 0) || (entryCreatureProb == 0) || (entryCarProb == 0) || (distances[0] <= 0) || (distances[1] <= 0) || (distances[2] <= 0) || (velocities[0] <= 0) || (velocities[1] <= 0) || (velocities[2] <= 0))
+	{
+		cout << "Reading configuration file: '" << fileName << "' failed, please check the format!" << endl;
+		return SIM_ERROR;
+	}
+
+	// check that all crosspoints are within the number of cells in the simulation
+	for(unsigned int c = 0; c < crossPoints.size(); c++)
+	{
+		if(crossPoints.at(c) > cellNum)
+		{
+			cout << "Error, crosspoint: " << crossPoints.at(c) << " is greater than total number of cells: " << cellNum << endl;
+			return SIM_ERROR;
+		}
+	}
+
+	//initialize the simulation using the parameters read from the file
+	cfg = new Simulation(maxTime, cellNum, laneNum, maxSpeed, entryCarProb, entryCreatureProb, crossPoints, experiment_id);
+	cfg->setDistances(distances[0],distances[1],distances[2]);
+	cfg->setVelocities(velocities[0],velocities[1],velocities[2]);
+	cfg->setRandomDecel(randomDecel);
+	cfg->setIntelligence(intelligence);
+	cfg->setFuzzyMembers(fuzzyMembers);
+	cfg->setKBOutput(kbOutput);
+
+	return SIM_SUCCESS;
+}
+
+// Reads the prior create knowledge from the input file
+// returns SIM_ERROR on error or SIM_SUCCESS on success
+int readPriorKnowledge(string fileName)
+{
+	ifstream infile(fileName, ifstream::in);
+	string line, p1, p2, p3, p4, p5;
+
+	if(infile.is_open())
+	{
+		getline(infile, line);
+
+		//parse each line until end of file
+		while(!infile.eof())
+		{
+			istringstream istr(string(line), ios_base::out);
+			istr >> p1 >> p2 >> p3 >> p4 >> p5;
+
+			int crossPoint = atoi(p1.c_str());
+			int lane = atoi(p2.c_str());
+			int proximity = atoi(p3.c_str());
+			int speed = atoi(p4.c_str());
+			int outcome = atoi(p5.c_str());
+
+			if(DEBUG)
+				cout << "  " << crossPoint << "    " << lane << "     " << proximity << "      " << speed << "      " << outcome << endl;
+			Result * r = new Result(crossPoint, lane, proximity, speed, outcome);
+			cfg->addResult(r);
+
+			getline(infile, line);
+		}
+		infile.close();
+	}
+	else
+	{
+		if(DEBUG)
+			cout << "Unable to open file: '" << fileName << "'" << endl;
+		return SIM_ERROR;
+	}
+	return SIM_SUCCESS;
+}

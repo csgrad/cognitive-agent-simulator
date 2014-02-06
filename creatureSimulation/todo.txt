@@ -1,0 +1,3 @@
+- Merge creature and car trace into one file
+- Output the knoweldge base for feeding into next simulation
+- Implement Anna's groups of fearful and motivated creatures each with a certain probability adding to one

@@ -1,0 +1,24 @@
+// propsensity test in both directions
+CELL_NUM 101
+LANE_NUM 2
+PROPENSITY_RIGHT 0.5	// likelyhood that a car will return towards the right lane rather than staying in passing lane
+MAX_TIME 1009
+MAX_CREATURES 0			// limit the number of generated creatures (for testing) 0 = disabled
+MAX_CARS 0				// limit the number of generated cars (for testing) 0 = disabled
+MAX_SPEED 11
+FIXED_FEAR 1			// 0 disabled
+FIXED_DESIRE 0
+ENTRY_CAR_PROB 0.1
+ENTRY_CAR_PROB_MAX 1.1
+ENTRY_CAR_PROB_INC	0.1
+ENTRY_CREATURE_PROB 1
+INTELLIGENCE 1			// 0 = naiive, 1 = f&d
+RANDOM_DECEL TRUE		// nagel-shrek random deceleration
+DISTANCE 3 5 7			// we can now add up to 10 values (but should be from low to high)
+VELOCITY 3 5 7			// we can now add up to 10 values (but should be from low to high)
+REPEATS 1
+KB_OUTPUT TRUE			//output knowledge base at each timestep in trace
+KB_EXPERIMENT TRUE		//preserve knowledge to next experiment
+HORIZONTAL_HOP 1		//max number of cells left or right in one timestep
+HORIZONTAL_MAX 5		//max number of cells left or right a creature can move from original crosspoint
+CROSS_POINT 90
