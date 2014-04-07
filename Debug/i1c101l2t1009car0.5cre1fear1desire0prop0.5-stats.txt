@@ -1,2 +1,0 @@
-Intelligence        CarProb   CreatureProb   Creatures Created   Success       Hit    Queued Creatures     Success Ratio
-         1            0.5              1                1009       829         9                 171          0.821606

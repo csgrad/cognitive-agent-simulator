@@ -234,11 +234,17 @@ void Simulation::updateProxSpeed(Creature * creature, int lane, int cell)
 	creature->setProximity(prox);
 
 	int closest_car;
-	if((closest_car = closestCar(0,cell)) != -1)
+	int max_distance = 0;
+	if (lanes.at(lane)[0].getDirection() == false)
+		max_distance = cellNum - cell;
+	else
+		max_distance = cell;
+
+	if((closest_car = carNearby(lane,max_distance, cell)) != -1)
 	{
-		int real_distance = cell - closest_car;
+		int real_distance = abs(cell - closest_car);
 		creature->setRealProximity(real_distance);
-		creature->setRealSpeed(lanes.at(0)[closest_car].getCar()->getSpeed());
+		creature->setRealSpeed(lanes.at(lane)[closest_car].getCar()->getSpeed());
 	}
 	else
 	{
@@ -1058,25 +1064,6 @@ int Simulation::carNearby(unsigned int lane, unsigned int distance, unsigned int
 				return cell;
 			cell--;
 		}
-	}
-	return -1;
-}
-
-// returns the cell of the closest car in a particular lane
-// or -1 if there is none
-int Simulation::closestCar(int lane, int cell)
-{
-	int end = 0;
-	int current = cell;
-	while(current >= end)
-	{
-		if(lanes.at(lane)[current].isOccupied())
-		{
-			if(DEBUG)
-				cout << "CAR FOUND AT " << current << endl;
-			return current;
-		}
-		current--;
 	}
 	return -1;
 }

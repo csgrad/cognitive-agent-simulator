@@ -70,7 +70,6 @@ class Simulation
 	int naiiveGetSpeed(Creature c, int lane);
 	int naiiveGetProx(Creature c, int lane);
 	int carNearby(unsigned int lane, unsigned int distance, unsigned int cell);
-	int closestCar(int lane, int cell);
 	void generateCars(void);
 	void generateCreatures(void);
 	unsigned int collisionSpeed(unsigned int lane, unsigned int position, unsigned int maxspeed);

@@ -1,0 +1,6 @@
+- exp.bat is used to generate the results and generate directory structure
+- graph.bat is used to graph the results
+- errobargraph.m graphs the means with errorbars. means are connected with lines
+- bestfiterrorgraph.m graphs the best fit line with the means and erorrbars
+- tp.m graphs the throughput of the creatures
+- stdshade.m required to plot the std dev of the tp graph
